@@ -126,15 +126,24 @@ public class md_LaserProcesser2 extends GenericCrafter{
                             Building other = world.build(tile.x + ox, tile.y + oy);
                             if (other != null) {
                                 if (other instanceof md_LaserProcesser2Build other2) {
-                                    other2.CacheLasers[r] = l1;
-                                    dl = 0f;
-                                    DrawEndGradient = false;
+                                    // 检查是否会形成循环：如果目标是激光处理器2，且我们的输出方向与它的输入方向相反
+                                    int oppositeDirection = (r + 2) % 4;
+                                    if (other2.CacheLasers[oppositeDirection] == null) {
+                                        other2.CacheLasers[r] = l1;
+                                        dl = 0f;
+                                        DrawEndGradient = false;
+                                    }
                                     break;
                                 }
                                 if (other instanceof md_LaserProcesserBuild other2) {
-                                    other2.CacheLasers.add(l1);
-                                    dl = 0f;
-                                    DrawEndGradient = false;
+                                    // 检查是否会形成循环：如果目标是激光处理器，且我们的输出方向与它的输入方向相反
+                                    int oppositeDirection = (r + 2) % 4;
+                                    int otherRotation = other2.rotation;
+                                    if (otherRotation != oppositeDirection) {
+                                        other2.CacheLasers.add(l1);
+                                        dl = 0f;
+                                        DrawEndGradient = false;
+                                    }
                                     break;
                                 }
                                 if (other instanceof md_LaserCrafterBuild other2) {
