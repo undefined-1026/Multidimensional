@@ -21,7 +21,7 @@ public class md_liquids {
         }};
 
         dimension_fluid = new CellLiquid("dimension-fluid",new Color(0xFFD188ff)){{
-            effect = md_status.dimension_slip;
+            effect = md_StatusEffects.dimension_slip;
             heatCapacity = 0.4f;
             boilPoint = 2f;
             viscosity = 0.85f;

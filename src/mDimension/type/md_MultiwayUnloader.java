@@ -51,7 +51,8 @@ public class md_MultiwayUnloader extends DirectionalUnloader{
     @Override
     public void setStats(){
         super.setStats();
-        stats.add(Stat.speed, 60f / speed, StatUnit.itemsSecond);
+        stats.remove(Stat.speed);
+        stats.add(Stat.speed, (60f / speed)*unloaderNumber, StatUnit.itemsSecond);
     }
     @Override
     public boolean outputsItems(){

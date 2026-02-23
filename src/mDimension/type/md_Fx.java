@@ -4,11 +4,18 @@ import arc.Core;
 import arc.graphics.g2d.*;
 import arc.math.Interp;
 import arc.math.Mathf;
+import arc.math.Rand;
+import arc.math.geom.Position;
+import arc.math.geom.Vec2;
 import arc.util.Time;
 import arc.util.Tmp;
+import mDimension.content.md_items;
+import mDimension.entity.EntityShield;
 import mDimension.entity.VisibleEffect;
 import mindustry.Vars;
+import mindustry.content.Blocks;
 import mindustry.content.Fx;
+import mindustry.core.World;
 import mindustry.entities.Effect;
 
 import arc.graphics.Color;
@@ -16,88 +23,257 @@ import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
 import mindustry.graphics.Pal;
 import mindustry.graphics.Shaders;
-import mindustry.type.UnitType;
 import mindustry.world.Block;
 
-import javax.swing.plaf.synth.Region;
-
 import static arc.graphics.g2d.Draw.*;
+import static arc.graphics.g2d.Lines.lineAngle;
 import static arc.graphics.g2d.Lines.stroke;
 import static arc.math.Angles.randLenVectors;
-import static mindustry.Vars.world;
 
 public class md_Fx {
-    public static final Effect
+        public static final Rand rand = new Rand();
+        public static final Vec2 v = new Vec2();
 
+        public static final Effect
+        dimension_vapor =
+        new Effect(150f, e -> {
+            color(new Color(0xffffb0ff));
+            alpha(e.fout());
 
-    dimension_vapor =
-    new Effect(150f, e -> {
-        color(new Color(0xffffb0ff));
-        alpha(e.fout());
+            randLenVectors(e.id, 3, 3f + e.finpow() * 11f, (x, y) -> {
+                Fill.poly(e.x + x, e.y + y, 4, 0.6f + e.fin() * 5f);
+            });
+            Draw.reset();
+        }),
+        dimension_vapor_small = new Effect(90f, e -> {
+            color(new Color(0xffffb0ff));
+            alpha(e.fout());
 
-        randLenVectors(e.id, 3, 3f + e.finpow() * 11f, (x, y) -> {
-            Fill.poly(e.x + x, e.y + y,4, 0.6f + e.fin() * 5f);
-        });
-    }),
-    dimension_vapor_small = new Effect(90f, e -> {
-        color(new Color(0xffffb0ff));
-        alpha(e.fout());
+            randLenVectors(e.id, 2, 1.8f + e.finpow() * 7f, (x, y) -> {
+                Fill.poly(e.x + x, e.y + y, 4, 0.6f + e.fin() * 5f);
+            });
+            Draw.reset();
+        }),
+        dimension_vapor_big =
+                new Effect(120, e -> {
+                    color(new Color(0xffffb0ff));
+                    alpha(e.fout());
 
-        randLenVectors(e.id, 2, 1.8f + e.finpow() * 7f, (x, y) -> {
-            Fill.poly(e.x + x, e.y + y,4, 0.6f + e.fin() * 5f);
-        });
-    }),
-    dimension_vapor_big =
-            new Effect(120, e -> {
-                color(new Color(0xffffb0ff));
-                alpha(e.fout());
+                    randLenVectors(e.id, 3, 4f + e.finpow() * 35f, (x, y) -> {
+                        Fill.poly(e.x + x, e.y + y, 4, 2f + e.fin() * 8f);
+                    });
+                }),
 
-                randLenVectors(e.id, 3, 4f + e.finpow() * 35f, (x, y) -> {
-                    Fill.poly(e.x + x, e.y + y,4, 2f + e.fin() * 8f);
+        catFly = new Effect(500, 9999f, e -> {
+            z(111);
+            TextureRegion region = Core.atlas.find("cat");
+            float dy = e.fin() * 8f * 30f;
+            float dr = (float) Math.pow(e.fin(), 2f) * 360f * 2.5f;
+            rect(region, e.x, e.y + dy, 16, 16, dr);
+        }),
+
+        plan = new Effect(120f, 80f, e -> {
+            TextureRegion region = Core.atlas.find("cat");
+            Draw.draw(Layer.blockBuilding, () -> {
+                Shaders.blockbuild.region = region;
+                Shaders.blockbuild.time = Time.time;
+                Shaders.blockbuild.progress = e.fin();
+
+                Draw.rect(region, e.x, e.y);
+                Draw.flush();
+            });
+            Draw.reset();
+        }),
+
+        regionFlash = new Effect(70, e -> {
+            if (!(e.data instanceof TextureRegion region)) return;
+            alpha(e.fout());
+            mixcol(Color.valueOf("ffe3bf"), e.fout());
+            rect(region, e.x, e.y, e.rotation);
+            Draw.reset();
+        }).layer(Layer.flyingUnit + 5f),
+
+        regionFlashColor = new Effect(70, e -> {
+            if (!(e.data instanceof TextureRegion region)) return;
+            alpha(e.fout());
+            mixcol(e.color, e.fout());
+            rect(region, e.x, e.y, e.rotation);
+            Draw.reset();
+        }).layer(Layer.flyingUnit + 5f),
+
+        spatter = new Effect(40f,e->{
+            Lines.stroke(4f*e.fout(Interp.pow3In));
+            color(e.color);
+            randLenVectors(e.id,6,15,21,(x,y)->{
+                Lines.line(e.x+x*(e.fin()+0.5f),e.y+y*(e.fin()+0.5f),e.x+x*(e.fin()*0.5f+1),e.y+y*(e.fin()*0.5f+1));
+            });
+        }),
+
+        spatterBig = new Effect(60f,e->{
+            Lines.stroke(7f*e.fout(Interp.pow3In));
+            color(e.color);
+            randLenVectors(e.id,10,30,42,(x,y)->{
+                Lines.line(e.x+x*(e.fin()+0.5f),e.y+y*(e.fin()+0.5f),e.x+x*(e.fin()*0.5f+1),e.y+y*(e.fin()*0.5f+1));
+            });
+        }),
+
+        polyWave = new Effect(25f,e->{
+            color(e.color);
+            stroke(e.fout() * 3);
+            Lines.poly(e.x, e.y, 4, e.finpow() * (16),e.rotation);
+            Draw.reset();
+        }),
+
+        shieldBreak = new Effect(60f,8f*20,e->{
+            if(e.data instanceof EntityShield entity){
+                color(e.color);
+                Lines.stroke(3f*e.fout());
+                Lines.poly(e.x,e.y,entity.sides,entity.realRadius,entity.shieldRotation);
+            }
+        }),
+
+        starExplosion = new Effect(25f,e->{
+            Lines.stroke(6f*e.fout());
+            color(e.color);
+            float rad = 40f* e.finpow();
+            Lines.circle(e.x,e.y,rad);
+            randLenVectors(e.id,6,rad,0,(x,y)->{
+                for(int i:Mathf.zeroOne){
+                    Drawf.tri(e.x+x,e.y+y,6f,35f*e.fout(),Mathf.angle(x,y)+i*-180f);
+                }
+            });
+
+        }),
+
+        starExplosionBig = new Effect(35f,e->{
+            Lines.stroke(5f*e.fout());
+            color(e.color);
+            float rad = 60f* e.finpow();
+            Lines.circle(e.x,e.y,rad);
+            randLenVectors(e.id,7,rad,0,(x,y)->{
+                for(int i:Mathf.zeroOne){
+                    Drawf.tri(e.x+x,e.y+y,12f,55f*e.fout(),Mathf.angle(x,y)+i*-180f);
+                }
+            });
+
+        }),
+
+        starExplosionSmall = new Effect(18f,e->{
+            Lines.stroke(3.5f*e.fout());
+            color(e.color);
+            float rad = 15f* e.finpow();
+            Lines.circle(e.x,e.y,rad);
+            randLenVectors(e.id,3,rad,0,(x,y)->{
+                for(int i:Mathf.zeroOne){
+                    Drawf.tri(e.x+x,e.y+y,4f,13f*e.fout(),Mathf.angle(x,y)+i*-180f);
+                }
+            });
+
+        }),
+
+        shootSmokeMissileSmallColor = new Effect(80f, 200f, e -> {
+            color(e.color);
+            alpha(0.6f);
+            rand.setSeed(e.id);
+            for(int i = 0; i < 20; i++){
+                v.trns(e.rotation + 180f + rand.range(12), rand.random(e.finpow() * 50f)).add(rand.range(1.5f), rand.range(1.5f));
+                e.scaled(e.lifetime * rand.random(0.2f, 1f), b -> {
+                    Fill.circle(e.x + v.x, e.y + v.y, b.fout() * 6f + 0.3f);
                 });
-            }),
+            }
+        }),
 
-    polyWave = new Effect(100, e -> {
-        color(new Color(0xffc0ffff), 0.7f);
-        stroke(e.fout() * 5f);
-        Lines.poly(e.x, e.y, 4,2f + e.finpow()*8.31f);
-    }),
+        leakage = new Effect(75f,e->{
+            color(e.color);
+            if(e.data instanceof float[] size && size.length>=2){
+                if(size.length>=3){
+                    if(size[2] == 1&& Vars.world.tile((int)(e.x/8),(int)(e.y/8)).build == null){
+                        e.time+=75f;
+                        e.lifetime = 0;
 
-    catFly = new Effect(500,9999f,e ->{
-        z(111);
-        TextureRegion region = Core.atlas.find("cat");
-        float dy = e.fin()*8f*30f;
-        float dr = (float)Math.pow(e.fin(),2f)*360f*2.5f;
-        rect(region,e.x,e.y+dy,16,16,dr);
-    }),
+                    }
+                }
+                float len = (float) (Math.sin(e.fin()*Math.PI)*1.9f*size[0]);
+                Drawf.tri(e.x,e.y,2f*size[1],len,Mathf.randomSeed(e.id,360));
+            }else {
+                float len = (float) (Math.sin(e.fin() * Math.PI) * 10f);
+                Drawf.tri(e.x, e.y, 6.5f, len, Mathf.randomSeed(e.id,360));
+            }
+        }).layer(Layer.effect-2f),
 
-    plan = new Effect(120f,80f,e->{
-        TextureRegion region = Core.atlas.find("cat");
-        Draw.draw(Layer.blockBuilding,()->{
-            Shaders.blockbuild.region = region;
-            Shaders.blockbuild.time = Time.time;
-            Shaders.blockbuild.progress = e.fin();
+    chainLightningBig = new Effect(25f, 350f, e -> {
+        if(!(e.data instanceof Position p)) return;
+        float tx = p.getX(), ty = p.getY(), dst = Mathf.dst(e.x, e.y, tx, ty);
+        Tmp.v1.set(p).sub(e.x, e.y).nor();
 
-            Draw.rect(region, e.x, e.y);
-            Draw.flush();
+        float normx = Tmp.v1.x, normy = Tmp.v1.y;
+        float range = 12f;
+        int links = Mathf.ceil(dst / range);
+        float spacing = dst / links;
+
+        Lines.stroke(3.5f * e.fout());
+        Draw.color(Color.white, e.color, e.fin());
+        Fill.circle(e.x,e.y,5f*e.fout());
+        Fill.circle(tx,ty,5f*e.fout());
+        Lines.beginLine();
+
+        Lines.linePoint(e.x, e.y);
+
+        rand.setSeed(e.id);
+
+        for(int i = 0; i < links; i++){
+            float nx, ny;
+            if(i == links - 1){
+                nx = tx;
+                ny = ty;
+            }else{
+                float len = (i + 1) * spacing;
+                Tmp.v1.setToRandomDirection(rand).scl(range/2f);
+                nx = e.x + normx * len + Tmp.v1.x;
+                ny = e.y + normy * len + Tmp.v1.y;
+            }
+
+            Lines.linePoint(nx, ny);
+        }
+
+        Lines.endLine();
+    }).followParent(false).rotWithParent(false),
+
+    dawnCharge = new Effect(50f, e -> {
+        mixcol(Color.valueOf("F8D09E"), Color.white,e.fin());
+        Lines.stroke(e.fslope()*1.5f);
+        randLenVectors(e.id, 16, 1f + 30f * e.fout(),(x, y) -> {
+            lineAngle(e.x + x, e.y + y, Mathf.angle(x, y), e.fslope() * 4f + 1f);
         });
-        Draw.reset();
+        color(Color.valueOf("F8D09E"));
+        Fill.circle(e.x,e.y,e.fin()*7f);
+        color(Color.white);
+        Fill.circle(e.x,e.y,e.fin()*4f);
     }),
 
-    regionFlash = new Effect(70, e -> {
-        if(!(e.data instanceof TextureRegion region)) return;
-        alpha(e.fout());
-        mixcol(Color.valueOf("ffe3bf"), e.fout());
-        rect(region, e.x , e.y, e.rotation);
-    }).layer(Layer.flyingUnit+5f),
 
 
-    awa = Fx.none;
+
+
+
+    none = Fx.none;
+
+
+
+
     public static Effect  polyWave(int side,float radius,float rotate,float stroke,float life,Color color,float alpha){
         return new Effect(life, e -> {
             color(new Color(color), alpha);
             stroke(e.fout() * stroke);
             Lines.poly(e.x, e.y, side, e.finpow() * (radius),rotate);
+            Draw.reset();
+        });
+    }
+    public static Effect  polyFacula(int side,float radius,float rotate,float life,Color color,float alpha){
+        return new Effect(life, e -> {
+            color(new Color(color), alpha);
+            Fill.poly(e.x, e.y, side, e.foutpow() * (radius),rotate);
+            Draw.reset();
         });
     }
     public static VisibleEffect loadLaunch(float life,String regionName,float trip,float tripXM,float tripYM,float flameSize){
@@ -137,7 +313,7 @@ public class md_Fx {
             Fill.light(cx, cy, 16, 35.0F * (rad + scale - 1.0F), Tmp.c2.set(Pal.engine).a(alpha), Tmp.c1.set(Pal.engine).a(0.0F));
             z(Layer.effect+1.1f);
             Fill.light(cx, cy, 10, 20.0F, Tmp.c2.set(new Color(1f,0.7f,0.65f,1f)).a(Math.max(0,fi*alpha*2f)), Tmp.c1.set(Pal.engine).a(0.0F));
-
+            Draw.reset();
         });
     }
     public static VisibleEffect loadLand(float life,String regionName,float trip,float tripXM,float tripYM,float flameSize,float stayTime){
@@ -174,6 +350,7 @@ public class md_Fx {
                 alpha(landalpha);
                 rect(loadRegion,e.x,e.y);
             }
+            Draw.reset();
 
 
 
@@ -187,21 +364,24 @@ public class md_Fx {
             randLenVectors(e.id, 3, (3f + e.finpow() * 11f)*size, (x, y) -> {
                 Fill.poly(e.x + x, e.y + y,4, (0.6f + e.fin() * 5f)*((size-1)*0.7f+1));
             });
+            Draw.reset();
         });
+
     }
     /**precision是绘制渐变的边数*/
-    public static Effect gradientWave(float life,float rad,Color formColor,float FCalpha,Color toColor,float TCalpha,int precision){
+    public static Effect gradientWave(float life,float rad){
         return new Effect(life,rad*2,e->{
 
-            float alpha = e.fout();
-            color(toColor);
+            color(e.color);
             Lines.stroke(3f*e.fout());
             float radd = rad*e.finpow();
             z(Layer.effect-11f);
-            Fill.light(e.x,e.y,precision,radd,formColor.a(FCalpha*alpha*0.8f),toColor.a(TCalpha*alpha*0.8f));
+
+            Fill.light(e.x,e.y,(int)(radd*1.5f+10),radd, Color.clear,e.color.a(e.fout()*0.8f));
             z(Layer.effect);
-            alpha(1f);
+            alpha(0.7f);
             Lines.circle(e.x,e.y,radd);
+            Draw.reset();
         });
     }
     public static Effect Mulitpleslash(float life,int number,Color color,float length,float width,float eccentricity){
@@ -216,6 +396,7 @@ public class md_Fx {
                     Drawf.tri(e.x+x,e.y+y,wid,len/2,i*180+rotat);
                 }
             });
+            Draw.reset();
         });
     }
     public static Effect polygonalStar(float life,int number,Color color,float length,float width,float rotation){
@@ -224,8 +405,9 @@ public class md_Fx {
             float wid = width * e.fout();
             color(color);
             for(int i=0;i<number;i++){
-                Drawf.tri(e.x,e.y,wid,len,i*(360f/number)+rotation);
+                Drawf.tri(e.x,e.y,wid,len,i*(360f/number)+rotation+e.rotation);
             }
+            Draw.reset();
         });
     }
     public static Effect polygonalStar(float life,int number,Color color,float length,float width,float rotation,float deltaRotation){
@@ -236,6 +418,16 @@ public class md_Fx {
             for(int i=0;i<number;i++){
                 Drawf.tri(e.x,e.y,wid,len,i*deltaRotation+rotation);
             }
+            Draw.reset();
         });
     }
+    public static Effect waveColor(float life, float radius, float stroke){
+        return new Effect(life, e -> {
+            color(e.color);
+            stroke(e.fout() * stroke);
+            Lines.circle(e.x, e.y, e.finpow() * (radius));
+            Draw.reset();
+        });
+    }
+
 }

@@ -1,7 +1,13 @@
 package mDimension;
 import arc.Core;
 import arc.Events;
+import arc.util.Log;
 import arc.util.Time;
+import mDimension.core.ExtendedRenderer;
+import mDimension.meta.md_Stat;
+import mDimension.meta.md_StatUnit;
+import mindustry.Vars;
+import mindustry.core.Renderer;
 import mindustry.game.EventType;
 import mindustry.mod.Mod;
 import mindustry.ui.dialogs.BaseDialog;
@@ -24,18 +30,48 @@ public class MDimensionMod extends Mod {
 
 
     }
+//    @Override
+//    public void init(){
+//        setupExtendedRenderer();
+//        // 监听客户端加载完成事件，确保在客户端加载完成后也能正确配置
+//        Events.on(EventType.ClientLoadEvent.class, e -> {
+//            if (Vars.renderer instanceof ExtendedRenderer) {
+//                Log.info("Configuring ExtendedRenderer ranges on client load...");
+//            }
+//        });
+//    }
     @Override
     public void loadContent(){
         super.loadContent();
         //载入
-        md_status.load();
+
+        md_Planets.load();
+
+        md_StatUnit.load();
+        md_Stat.load();
+        md_StatusEffects.load();
         md_items.load();
         md_liquids.load();
         md_blocks.load();
+        md_UnitType.load();
         original_reset.load();
 
-
-
+        md_SectorPresets.load();
+        md_TechTree.load();
 
     }
+
+    private void setupExtendedRenderer() {
+        Renderer oldRenderer = Vars.renderer;
+        try {
+            ExtendedRenderer extendedRenderer = new ExtendedRenderer();
+            extendedRenderer.init();
+            Vars.renderer = extendedRenderer;
+            Log.info("ExtendedRenderer initialized successfully!");
+        } catch (Throwable e) {
+            Log.err("Failed to initialize ExtendedRenderer:", e);
+            Vars.renderer = oldRenderer;
+        }
+    }
+
 }
