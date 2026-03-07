@@ -46,7 +46,7 @@ public class MDimensionMod extends Mod {
         //载入
 
         md_Planets.load();
-
+        md_beams.load();
         md_StatUnit.load();
         md_Stat.load();
         md_StatusEffects.load();

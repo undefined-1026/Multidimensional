@@ -1,19 +1,9 @@
 package mDimension.content;
-import arc.graphics.Color;
 import mDimension.entity.ability.SprintAbility;
-import mDimension.type.TestCrafter;
-import mDimension.type.md_Fx;
 import mindustry.content.*;
 import mindustry.entities.bullet.LiquidBulletType;
-import mindustry.entities.bullet.PointLaserBulletType;
-import mindustry.gen.Hitboxc;
-import mindustry.gen.UnitEntity;
 import mindustry.type.*;
-import mindustry.world.blocks.defense.turrets.ContinuousTurret;
 import mindustry.world.blocks.defense.turrets.LiquidTurret;
-import mindustry.world.blocks.production.GenericCrafter;
-
-import java.lang.reflect.Method;
 
 public class original_reset {
     public static void load() {

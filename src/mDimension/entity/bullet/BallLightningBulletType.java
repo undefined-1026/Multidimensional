@@ -163,10 +163,10 @@ public class BallLightningBulletType extends BasicBulletType {
     }
     /// 仅视觉效果
     public void remaining(Bullet b,int count){
-        count = Math.min(count, 6);
+        count = Math.min((int)(count/3), 6);
         if(count <=0 || !b.isAdded())return;
         Vec2 endPoint = new Vec2(b.x,b.y);
-        Angles.randLenVectors((long) (Time.time+b.id* 114L),count,lightningRange*0.25f,lightningRange*0.7f,(x, y)->{
+        Angles.randLenVectors((long) (Time.time+b.id* 114L),count,lightningRange*0.15f,lightningRange*0.5f,(x, y)->{
             lightningEffect.at(b.getX()+x,b.getY()+y, 0f, lightningColor,endPoint);
         });
     }

@@ -9,13 +9,10 @@ import arc.math.geom.Position;
 import arc.math.geom.Vec2;
 import arc.util.Time;
 import arc.util.Tmp;
-import mDimension.content.md_items;
 import mDimension.entity.EntityShield;
 import mDimension.entity.VisibleEffect;
 import mindustry.Vars;
-import mindustry.content.Blocks;
 import mindustry.content.Fx;
-import mindustry.core.World;
 import mindustry.entities.Effect;
 
 import arc.graphics.Color;
@@ -23,7 +20,8 @@ import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
 import mindustry.graphics.Pal;
 import mindustry.graphics.Shaders;
-import mindustry.world.Block;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static arc.graphics.g2d.Draw.*;
 import static arc.graphics.g2d.Lines.lineAngle;
@@ -35,13 +33,11 @@ public class md_Fx {
         public static final Vec2 v = new Vec2();
 
         public static final Effect
-        dimension_vapor =
-        new Effect(150f, e -> {
+        dimension_vapor = new Effect(120f, e -> {
             color(new Color(0xffffb0ff));
             alpha(e.fout());
-
-            randLenVectors(e.id, 3, 3f + e.finpow() * 11f, (x, y) -> {
-                Fill.poly(e.x + x, e.y + y, 4, 0.6f + e.fin() * 5f);
+            randLenVectors(e.id, 5, 2.2f + e.finpow() * 12f, (x, y) -> {
+                Fill.poly(e.x + x, e.y + y, 4, 0.6f + e.fin() * 7f);
             });
             Draw.reset();
         }),
@@ -211,10 +207,10 @@ public class md_Fx {
         int links = Mathf.ceil(dst / range);
         float spacing = dst / links;
 
-        Lines.stroke(3.5f * e.fout());
-        Draw.color(Color.white, e.color, e.fin());
-        Fill.circle(e.x,e.y,5f*e.fout());
-        Fill.circle(tx,ty,5f*e.fout());
+        Lines.stroke(2.6f * e.fout());
+        Draw.color(Color.white, e.color,e.fin()*0.5f);
+        Fill.circle(e.x,e.y,3f*e.fout());
+        Fill.circle(tx,ty,3f*e.fout());
         Lines.beginLine();
 
         Lines.linePoint(e.x, e.y);
@@ -228,7 +224,7 @@ public class md_Fx {
                 ny = ty;
             }else{
                 float len = (i + 1) * spacing;
-                Tmp.v1.setToRandomDirection(rand).scl(range/2f);
+                Tmp.v1.setToRandomDirection(rand).scl(range*0.45f);
                 nx = e.x + normx * len + Tmp.v1.x;
                 ny = e.y + normy * len + Tmp.v1.y;
             }
@@ -426,6 +422,37 @@ public class md_Fx {
             color(e.color);
             stroke(e.fout() * stroke);
             Lines.circle(e.x, e.y, e.finpow() * (radius));
+            Draw.reset();
+        });
+    }
+    public static Effect waveHitColor(float life, float radius, float lineSize, float stroke,float alpha){
+        return new Effect(life, e -> {
+            color(e.color,Color.white,e.fin());
+            alpha(alpha);
+            stroke(e.fout() * stroke);
+            Lines.circle(e.x, e.y, e.finpow() * (radius));
+            stroke(0.6f+e.fout());
+            alpha(1f);
+            randLenVectors(e.id,5,lineSize*e.fin(),(x,y)->{
+                Lines.lineAngle(e.x+x,e.y+y,Mathf.angle(x,y),e.fout()*lineSize*0.5f);
+            });
+            Draw.reset();
+        });
+    }
+    public static Effect craftEffect(float life,float size,Color color,int amount){
+        return craftEffect(life,size,color,amount,new float[]{0,0});
+    }
+    public static Effect craftEffect(float life,float size,Color color,int amount,float[] spawn){
+        return new Effect(life, e -> {
+            color(color,Pal.lightishGray,e.finpow());
+            alpha(0.9f);
+
+
+            rand.setSeed(e.id);
+            for(int i = e.id%spawn.length,j = 0; j < amount; j++,i++){
+                v.trns(rand.random(360f), rand.random(2.5f+e.fin()*size));
+                Fill.poly(e.x + v.x + spawn[(i*2)%spawn.length], e.y + v.y + spawn[(i*2+1)%spawn.length], 4, e.foutpowdown()*2.5f);
+            }
             Draw.reset();
         });
     }

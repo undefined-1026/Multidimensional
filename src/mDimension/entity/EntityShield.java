@@ -161,7 +161,7 @@ public class EntityShield implements Entityc , Drawc {
 
     @Override
     public boolean isAdded() {
-        return false;
+        return added;
     }
 
     @Override
@@ -181,12 +181,12 @@ public class EntityShield implements Entityc , Drawc {
 
     @Override
     public int classId() {
-        return 0;
+        return 100;
     }
 
     @Override
     public int id() {
-        return 0 ;
+        return id ;
     }
 
     @Override
@@ -210,13 +210,28 @@ public class EntityShield implements Entityc , Drawc {
     }
 
     @Override
-    public void read(Reads reads) {
+    public void read(Reads read) {
+        time = read.f();
+        lifeTime = read.f();
+        buildup = read.f();
+        x = read.f();
+        y = read.f();
+        sides = read.i();
+        radius = read.f();
+        wramup = read.f();
 
     }
 
     @Override
-    public void write(Writes writes) {
-
+    public void write(Writes write) {
+        write.f(time);
+        write.f(lifeTime);
+        write.f(buildup);
+        write.f(x);
+        write.f(y);
+        write.i(sides);
+        write.f(radius);
+        write.f(wramup);
     }
 
     @Override
